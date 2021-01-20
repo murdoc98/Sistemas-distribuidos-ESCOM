@@ -29,11 +29,11 @@ def broadcastSync():
         servres = json.dumps(books)
         server.send(servres.encode())
 
-def clockSocket():
+def clockSocket(addr):
     global server3
     global time
     try:
-        server3.connect(('127.0.0.1', 8888))
+        server3.connect(addr)
         while True:
             data = server3.recv(1024).decode()
             if not data:
@@ -111,23 +111,15 @@ def serverSocket(conn, addr):
 if __name__ == '__main__':
     sg.theme('DarkBlue16')
     layout = [
-        [sg.Text('Server 1', size=(100, 1), justification='center')],
-        [sg.Text('Server hour: ', size=(20, 1), key='clock'), sg.InputText(key='utc_server', size=(20, 1)), sg.Button('Connect')],
-        [sg.Text('Port:'), sg.InputText(key='server_port', size=(10, 1)), sg.Button('Serve')],
+        [sg.Text('Server hour: ', size=(20, 1), key='clock'), sg.InputText(key='utc_server', size=(16, 1)), sg.Button('Connect')],
+        [sg.Text('Server Port:'), sg.InputText(key='server_port', size=(10, 1)), sg.Button('Serve', key='server_serve')],
+        [sg.Text('Client Port:'), sg.InputText(key='client_port', size=(10, 1)), sg.Button('Serve', key='client_serve')],
         [sg.Text('Books left: 5', size=(100, 1),key='book', justification='center')],
         [sg.Text('Replicant servers: 0', size=(100, 1),key='replicants', justification='center')],
         [sg.Text('Users connected: 0', size=(100, 1),key='users', justification='center')],
         [sg.Button('Restart'), sg.Button('Print left books')],
     ]
     window = sg.Window('Main server', layout, size=(650,600), font='Helvetica 16')
-
-    s = threading.Thread(target=clockSocket, args=(), name='clock')
-    s.daemon = True
-    s.start()
-
-    r = threading.Thread(target=serverPool, args=(), name='server2')
-    r.daemon = True
-    r.start()
 
     t = threading.Thread(target=clientPool, args=(), name='server')
     t.daemon = True
@@ -148,7 +140,35 @@ if __name__ == '__main__':
         elif event == 'Serve':
             serverPoolPort = values['server_port']
             print(serverPoolPort)
-            print('Servidor escuchando')
-        if time != 0:
+        elif event == 'Connect':
+            if time == 0:
+                utcIP = values['utc_server'][:values['utc_server'].find(':')]
+                utcPORT = int(values['utc_server'][values['utc_server'].find(':') + 1:])
+                addr = (utcIP, utcPORT)
+                s = threading.Thread(target=clockSocket, args=(addr, ), name='clock')
+                s.daemon = True
+                s.start()
+            else:
+                print('Funciono :0')
+                # Pendiente modificar la hora del servidor actual y hacer un broadcast a sus clientes
+        elif event == 'server_serve':
+            r = threading.Thread(target=serverPool, args=(), name='server2')
+            r.daemon = True
+            r.start()
+            serverService = True
+        elif event == 'client_serve':
+            print('Creando la escucha del cliente')
+
+        if time == 0:
+            window.Element('server_serve').Update(disabled=True)
+            window.Element('client_serve').Update(disabled=True)
+            window.Element('Restart').Update(disabled=True)
+            window.Element('Print left books').Update(disabled=True)
+        else:
+            window.Element('Serve').Update(disabled=False)
+            window.Element('Restart').Update(disabled=False)
+            window.Element('Print left books').Update(disabled=False)
             window.Element('clock').Update('Server hour: {}'.format(str(datetime.fromtimestamp(time))[11:-4]))
+            window.Element('Connect').Update('Modify hour')
             time += 0.01
+

@@ -11,7 +11,6 @@ def broadcastSync():
     global time
     global serverConnections
     for server in serverConnections:
-        print(str(datetime.fromtimestamp(time))[11:-4])
         servres = str(time)
         server.send(servres.encode())
 
