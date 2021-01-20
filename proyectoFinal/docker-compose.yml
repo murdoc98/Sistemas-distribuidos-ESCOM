@@ -1,0 +1,21 @@
+# docker-compose configuration file
+version: '3'
+services:
+  database1:
+    image: 'postgres'
+    container_name: 'db1'
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: distribuidos
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: base1
+  database2:
+    image: 'postgres'
+    container_name: 'db2'
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: distribuidos
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: base2
