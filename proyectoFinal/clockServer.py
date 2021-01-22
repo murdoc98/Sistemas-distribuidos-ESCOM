@@ -1,12 +1,14 @@
 import PySimpleGUI as sg
 import requests
 import threading
+import json
 from datetime import datetime
 from socket import socket
 
 server = socket()
 serverNo = 0
 serverConnections = []
+eventsReport = []
 def broadcastSync():
     global time
     global serverConnections
@@ -29,6 +31,7 @@ def serverPool():
 def serverSocket(conn, addr):
     global serverNo
     global serverConnections
+    global data
     try:
         servres = str(time)
         conn.send(servres.encode())
@@ -36,7 +39,11 @@ def serverSocket(conn, addr):
             data = conn.recv(1024).decode()
             if not data:
                 raise Exception
+            res = json.loads(data)
+            res['serverName'] = threading.current_thread().name
+            eventsReport.append(res)
     except Exception as ex:
+        print(ex)
         serverNo -= 1
         serverConnections.remove(conn)
         conn.close()
@@ -50,8 +57,9 @@ if __name__ == '__main__':
         [sg.Text('Servers connected: 0', size=(100, 0), key='connected', justification='center')],
         [sg.Text('Sync on 15', size=(100, 0), key='countdown', justification='center')],
         [sg.Text('', size=(100, 1), key='time', justification='center')],
+        [sg.Button('Events report', size=(10, 1))]
     ]
-    window = sg.Window('Clock server', layout, size=(230,120), font='Helvetica 12')
+    window = sg.Window('Clock server', layout, size=(230,150), font='Helvetica 12')
     counter = 20
 
     r = threading.Thread(target=serverPool, args=(), name='server2')
@@ -66,8 +74,12 @@ if __name__ == '__main__':
         window.Element('connected').Update('Servers connected {}'.format(serverNo))
         time += 0.01
         counter = round(counter - 0.01, 2)
+        if event == sg.WIN_CLOSED:
+            break
+        if event == 'Events report':
+            print('Events report')
+            for report in eventsReport:
+                print(report)
         if counter == 0:
             broadcastSync()
             counter = 20
-        if event == sg.WIN_CLOSED:
-            break

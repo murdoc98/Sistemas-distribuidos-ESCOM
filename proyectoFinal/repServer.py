@@ -18,6 +18,16 @@ serverService = False
 clientService = False
 clientConnections = []
 url = ''
+
+def resetServer():
+    global clientConnections
+    global books
+    global clientNo
+    print('Reiniciando server')
+    print(clientConnections)
+    for client in clientConnections:
+        client.send('&'.encode())
+
 def clientSync():
     global clientConnections
     for client in clientConnections:
@@ -56,15 +66,25 @@ def clientSocket(conn, addr):
     global clientNo
     global books
     global url
+    global server3
     global clientConnections
     try:
-        res = ''
         conn.send(str(time).encode())
         data = conn.recv(1024).decode()
         if data == '0':
+            if len(books) == 0:
+                raise Exception
             index = randint(0, len(books) - 1)
             res = books.pop(index)
             url = res['url']
+            clkRes = {
+                'bookData': res,
+                'clientName': threading.current_thread().name,
+                'time': str(datetime.fromtimestamp(time))[11:-4],
+                'type': 'solicitar libro'
+            }
+            clkRes = json.dumps(clkRes)
+            server3.send(clkRes.encode())
             res = json.dumps(res)
             conn.send(res.encode())
             servres = json.dumps(books)
@@ -72,10 +92,20 @@ def clientSocket(conn, addr):
         data = conn.recv(1024).decode()
         if not data:
             raise Exception
-    except:
+    except Exception as ex:
+        print(ex)
         clientNo -= 1
         clientConnections.remove(conn)
         if res != '':
+            clkRes = {
+                'bookData': res,
+                'clientName': threading.current_thread().name,
+                'time': str(datetime.fromtimestamp(time))[11:-4],
+                'type': 'devolver libro'
+            }
+            clkRes = json.dumps(clkRes)
+            server3.send(clkRes.encode())
+            res = json.loads(res)
             books.append(res)
         conn.close()
         servres = json.dumps(books)
@@ -105,7 +135,6 @@ if __name__ == '__main__':
         [sg.Text('Client Port:', size=(9, 1)), sg.InputText(key='client_port', size=(10, 1)), sg.Button('Serve', key='client_serve')],
         [sg.Text('Books left: 5', size=(100, 1),key='book', justification='center')],
         [sg.Text('Users connected: 0', size=(100, 1),key='status', justification='center')],
-        [sg.Text('Direccion ip:'), sg.InputText(key='ip_port')],
         [sg.Button('Restart'), sg.Button('Print left books')],
         [sg.Text('Last choosen book'), sg.Image(filename='', key='image')]
     ]
@@ -151,6 +180,10 @@ if __name__ == '__main__':
             t.daemon = True
             t.start()
             clientService = True
+        elif event == 'Restart':
+            resetServer()
+            servres = json.dumps(books)
+            server2.send(servres.encode())
         
         if time == 0:
             window.Element('server_connect').Update(disabled=True)

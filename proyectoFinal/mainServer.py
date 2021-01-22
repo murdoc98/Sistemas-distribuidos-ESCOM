@@ -19,11 +19,38 @@ time = 0
 serverService = False
 clientService = False
 books = [
-    {'bookTitle': 'Introduccion to algorithms', 'url': './images/lib1.png'},
-    {'bookTitle': 'Homo deus', 'url': './images/lib2.png'},
-    {'bookTitle': 'The design of everiday things', 'url': './images/lib3.png'},
-    {'bookTitle': 'Cracking the codding interview', 'url': './images/lib4.png'},
-    {'bookTitle': 'Metro 2033', 'url': './images/lib5.png'}
+    # Nombre, Autor, Editorial, Precio, Protada
+    {
+        'bookTitle': 'Introduccion to algorithms', 
+        'author':    'Thomas H. Cormen',
+        'editorial': 'Basu',
+        'price':    '60 USD',
+        'url': './images/lib1.png'
+    }, {
+        'bookTitle':   'Homo deus',
+        'author': 'Yuval Noah Harari',
+        'editorial': 'Harvill Secker',
+        'prince': '30 USD',
+        'url': './images/lib2.png'
+    }, {
+        'bookTitle':   'The design of everiday things', 
+        'author': 'Donald Norman',
+        'editorial': 'Basic Books',
+        'price': '50 USD',
+        'url': './images/lib3.png'
+    }, {
+        'bookTitle' :  'Cracking the codding interview',
+        'author':    'Gayle Laakmann McDowell',
+        'editorial': 'Tlacoyos club',
+        'price': '400 MXN',
+        'url': './images/lib4.png'
+    }, {
+        'bookTitle': 'Metro 2033',
+        'author': 'Donald Trump',
+        'editorial': 'Pambazos editorial',
+        'price': '30 EUR',
+        'url': './images/lib5.png'
+    }
 ]
 url = ''
 
@@ -81,14 +108,26 @@ def clientSocket(conn, addr):
     global clientConnections
     global books
     global server2
+    global server3
     global url
+    global time
     try:
         res = ''
         conn.send(str(time).encode())
         data = conn.recv(1024).decode()
         if data == '0':
+            if len(books) == 0:
+                raise Exception
             index = randint(0, len(books) - 1)
             res = books.pop(index)
+            clkRes = {
+                'bookData': res,
+                'clientName': threading.current_thread().name,
+                'time': str(datetime.fromtimestamp(time))[11:-4],
+                'type': 'solicitar libro'
+            }
+            clkRes = json.dumps(clkRes)
+            server3.send(clkRes.encode())
             url = res['url']
             res = json.dumps(res)
             conn.send(res.encode())
@@ -101,6 +140,14 @@ def clientSocket(conn, addr):
         clientConnections.remove(conn)
         clientNo -= 1
         if res != '':
+            clkRes = {
+                'bookData': res,
+                'clientName': threading.current_thread().name,
+                'time': str(datetime.fromtimestamp(time))[11:-4],
+                'type': 'devolver libro'
+            }
+            clkRes = json.dumps(clkRes)
+            server3.send(clkRes.encode())
             res = json.loads(res)
             books.append(res)
             serverSync()

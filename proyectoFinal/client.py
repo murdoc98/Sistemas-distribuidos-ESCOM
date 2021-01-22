@@ -4,17 +4,20 @@ from datetime import datetime
 from socket import socket
 import json
 state = False
-s = socket()
 time = 0
 book = ''
+s = socket()
 def clientSocket(addr):
     global state
     global time
     global book
     global url
+    global s
     try:
+        print('awa')
         s = socket()
         s.connect(addr)
+        print(s)
         #reqTime = datetime.now().timestamp()
         #time = float(s.recv(1024).decode())
         #resTime = datetime.now().timestamp()
@@ -31,7 +34,6 @@ def clientSocket(addr):
                 data = json.loads(data)
                 book = data['bookTitle']
             elif data[0] == '&':
-                print('Llego aqui')
                 raise Exception('Disconnect')
             else:
                 time = float(data)
@@ -40,6 +42,7 @@ def clientSocket(addr):
         Book = 'Disconnected'
         time = 0
         state = False
+        s.close()
 
 if __name__ == '__main__':
     sg.theme('DarkBlue16')
@@ -63,6 +66,8 @@ if __name__ == '__main__':
             t.daemon = True
             t.start()
         elif event == 'Ask for book':
+            print(s)
+            print('Esta pidiendo un libro')
             s.send('0'.encode())
         if time != 0:
             strdate = str(datetime.fromtimestamp(time))[11:-4]
