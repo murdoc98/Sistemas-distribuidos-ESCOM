@@ -46,12 +46,12 @@ if __name__ == '__main__':
     time = response['unixtime']
     sg.theme('DarkBlue16')
     layout = [
-        [sg.Text('UTC Server', size=(100, 1), key='title', justification='center')],
-        [sg.Text('Servers connected: 0', size=(100, 1), key='connected', justification='center')],
-        [sg.Text('Sync on 15', size=(100, 1), key='countdown', justification='center')],
+        [sg.Text('UTC', size=(100, 0), key='title', justification='center')],
+        [sg.Text('Servers connected: 0', size=(100, 0), key='connected', justification='center')],
+        [sg.Text('Sync on 15', size=(100, 0), key='countdown', justification='center')],
         [sg.Text('', size=(100, 1), key='time', justification='center')],
     ]
-    window = sg.Window('Clock server', layout, size=(280,140), font='Helvetica 16')
+    window = sg.Window('Clock server', layout, size=(230,120), font='Helvetica 12')
     counter = 20
 
     r = threading.Thread(target=serverPool, args=(), name='server2')
